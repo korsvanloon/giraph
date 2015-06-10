@@ -22,6 +22,7 @@ import org.apache.giraph.graph.BasicComputation;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.DoubleWritable;
 import org.apache.giraph.graph.Vertex;
+import org.apache.hadoop.io.NullWritable;
 
 import java.io.IOException;
 
@@ -32,15 +33,16 @@ import java.io.IOException;
     name = "Outdegree Count"
 )
 public class SimpleOutDegreeCountComputation extends BasicComputation<
-  LongWritable, LongWritable, DoubleWritable, DoubleWritable> {
+  LongWritable, NullWritable, DoubleWritable, DoubleWritable> {
 
   @Override
   public void compute(
-      Vertex<LongWritable, LongWritable, DoubleWritable> vertex,
+      Vertex<LongWritable, NullWritable, DoubleWritable> vertex,
       Iterable<DoubleWritable> messages) throws IOException {
-    LongWritable vertexValue = vertex.getValue();
-    vertexValue.set(vertex.getNumEdges());
-    vertex.setValue(vertexValue);
+//    LongWritable vertexValue = vertex.getValue();
+//    vertexValue.set(vertex.getNumEdges());
+//    vertex.setValue(vertexValue);
+
     vertex.voteToHalt();
   }
 }
