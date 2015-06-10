@@ -14,11 +14,11 @@ import java.io.IOException;
         name = "comp Count"
 )
 public class Comp extends BasicComputation<
-        IntWritable, NullWritable, IntWritable, NullWritable> {
+        IntWritable, NullWritable, NullWritable, NullWritable> {
 
   @Override
   public void compute(
-          Vertex<IntWritable, NullWritable, IntWritable> vertex,
+          Vertex<IntWritable, NullWritable, NullWritable> vertex,
           Iterable<NullWritable> messages) throws IOException {
 //    LongWritable vertexValue = vertex.getValue();
 //    vertexValue.set(vertex.getNumEdges());
