@@ -27,31 +27,25 @@ public class Comp extends BasicComputation<
           Iterable<TupleWritable> messages) throws IOException {
 
     // look if vertex has a
-    messages.forEach(tuple -> {
-      vertex.getEdges().forEach(edge -> {
-        if(edge.getTargetVertexId().get() == ((IntWritable) tuple.get(0)).get()) {
+    for(TupleWritable tuple :messages)
+      for(Edge<IntWritable, NullWritable> edge : vertex.getEdges())
+        if(edge.getTargetVertexId().get() == ((IntWritable) tuple.get(0)).get())
           saveTriangle(tuple, vertex);
-        }
-      });
-    });
 
     // split the neighbours into smaller and bigger vertices.
     List<IntWritable> smallerVertices = new ArrayList<>();
     List<IntWritable> greaterVertices = new ArrayList<>();
-    vertex.getEdges().forEach(edge -> {
-      if(edge.getTargetVertexId().get() < vertex.getId().get()) {
-        smallerVertices.add(edge.getTargetVertexId());
-      } else {
-        greaterVertices.add(edge.getTargetVertexId());
-      }
-    });
 
-    smallerVertices.forEach(smallerV -> { // a
-      greaterVertices.forEach(greaterV -> { // c
+    for(Edge<IntWritable, NullWritable> edge : vertex.getEdges())
+      if(edge.getTargetVertexId().get() < vertex.getId().get())
+        smallerVertices.add(edge.getTargetVertexId());
+      else
+        greaterVertices.add(edge.getTargetVertexId());
+
+    for(IntWritable smallerV : smallerVertices)
+      for(IntWritable greaterV : greaterVertices)
         // hey greaterV, do you have a connection to smallerV? kind regards V
         sendMessage(greaterV, new TupleWritable(new Writable[]{ smallerV, vertex.getId() }));
-      });
-    });
 
     vertex.voteToHalt();
   }
