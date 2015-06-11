@@ -28,16 +28,18 @@ public class Comp extends BasicComputation<
 
     // look if vertex has a
     messages.forEach(tuple -> {
-      if(edgesContainTuple(vertex.getEdges(), tuple)) {
-        saveTriangle(vertex, tuple);
-      }
+      vertex.getEdges().forEach(edge -> {
+        if(edge.getTargetVertexId().get() == ((IntWritable) tuple.get(0)).get()) {
+          saveTriangle(tuple, vertex);
+        }
+      });
     });
 
     // split the neighbours into smaller and bigger vertices.
     List<IntWritable> smallerVertices = new ArrayList<>();
     List<IntWritable> greaterVertices = new ArrayList<>();
     vertex.getEdges().forEach(edge -> {
-      if(vertex.getId().compareTo(edge.getTargetVertexId()) < 0) {
+      if(edge.getTargetVertexId().get() < vertex.getId().get()) {
         smallerVertices.add(edge.getTargetVertexId());
       } else {
         greaterVertices.add(edge.getTargetVertexId());
@@ -46,7 +48,7 @@ public class Comp extends BasicComputation<
 
     smallerVertices.forEach(smallerV -> { // a
       greaterVertices.forEach(greaterV -> { // c
-        // send (a,b) to c
+        // hey greaterV, do you have a connection to smallerV? kind regards V
         sendMessage(greaterV, new TupleWritable(new Writable[]{ smallerV, vertex.getId() }));
       });
     });
@@ -54,20 +56,7 @@ public class Comp extends BasicComputation<
     vertex.voteToHalt();
   }
 
-  private boolean edgesContainTuple(Iterable<Edge<IntWritable, NullWritable>> edges, TupleWritable tuple) {
-    boolean a = false, b = false;
-    for(Edge edge : edges) {
-      if(edge.getTargetVertexId().compareTo(tuple.get(0)) == 0) {
-        a = true;
-      }
-      else if(edge.getTargetVertexId().compareTo(tuple.get(1)) == 0) {
-        b = true;
-      }
-    }
-    return a && b;
-  }
-
-  private void saveTriangle(Vertex vertex, TupleWritable tuple) {
-    System.out.println("[" + tuple.get(0).toString() + ", " + vertex.getId().toString() + ", " + tuple.get(1).toString() + "]");
+  private void saveTriangle(TupleWritable tuple, Vertex vertex) {
+    System.out.println("[" + tuple.get(0).toString() + ", " + tuple.get(1).toString() + ", " + vertex.getId().toString() + "]");
   }
 }
