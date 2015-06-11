@@ -6,6 +6,7 @@ import org.apache.giraph.graph.Vertex;
 import org.apache.giraph.io.formats.TextVertexOutputFormat;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapred.join.TupleWritable;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -23,14 +24,14 @@ import java.util.List;
         name = "comp Count"
 )
 public class Comp extends BasicComputation<
-        IntWritable, NullWritable, NullWritable, TupleWritable> {
+        IntWritable, Text, NullWritable, TupleWritable> {
 
   private static final Logger LOG =
           Logger.getLogger(Comp.class);
 
   @Override
   public void compute(
-          Vertex<IntWritable, NullWritable, NullWritable> vertex,
+          Vertex<IntWritable, Text, NullWritable> vertex,
           Iterable<TupleWritable> messages) throws IOException {
 
     // look if vertex has a
@@ -57,9 +58,10 @@ public class Comp extends BasicComputation<
     vertex.voteToHalt();
   }
 
-  private void saveTriangle(TupleWritable tuple, Vertex vertex) {
+  private void saveTriangle(TupleWritable tuple, Vertex<IntWritable, Text, NullWritable> vertex) {
     String triangle = "[" + tuple.get(0).toString() + ", " + tuple.get(1).toString() + ", " + vertex.getId().toString() + "]";
     System.out.println(triangle);
+    vertex.setValue(new Text(vertex.getValue().toString() + triangle));
     LOG.info(triangle);
   }
 
