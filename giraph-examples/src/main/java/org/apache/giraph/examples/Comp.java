@@ -13,9 +13,19 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.log4j.Logger;
 
 import javax.validation.constraints.Null;
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+
+// Stdout: /usr/local/hadoop/logs/userlogs/job_201506101104_0019/attempt_201506101104_0019_m_000001_0/stdout
+// (the job and attempt directories change)
+
+// vertex output: $HADOOP_HOME/bin/hadoop dfs -cat /user/hduser/output/comp/p*
+
+// remove outputdir: $HADOOP_HOME/bin/hadoop dfs -rmr /user/hduser/output/comp
 
 /**
  * Simple function to return the out degree for each vertex.
@@ -24,21 +34,16 @@ import java.util.List;
         name = "comp Count"
 )
 public class Comp extends BasicComputation<
-        IntWritable, Text, NullWritable, TupleWritable> {
+        IntWritable, Text, NullWritable, Comp.PairWritable> {
 
-  private static final Logger LOG =
-          Logger.getLogger(Comp.class);
+//  private static final Logger LOG =
+//          Logger.getLogger(Comp.class);
 
   @Override
   public void compute(
           Vertex<IntWritable, Text, NullWritable> vertex,
-          Iterable<TupleWritable> messages) throws IOException {
+          Iterable<PairWritable> messages) throws IOException {
 
-    // look if vertex has a
-    for(TupleWritable tuple :messages)
-      for(Edge<IntWritable, NullWritable> edge : vertex.getEdges())
-        if(edge.getTargetVertexId().get() == ((IntWritable) tuple.get(0)).get())
-          saveTriangle(tuple, vertex);
 
     // split the neighbours into smaller and bigger vertices.
     List<IntWritable> smallerVertices = new ArrayList<>();
@@ -51,18 +56,67 @@ public class Comp extends BasicComputation<
         greaterVertices.add(edge.getTargetVertexId());
 
     for(IntWritable smallerV : smallerVertices)
-      for(IntWritable greaterV : greaterVertices)
+      for(IntWritable greaterV : greaterVertices) {
+
         // hey greaterV, do you have a connection to smallerV? kind regards V
-        sendMessage(greaterV, new TupleWritable(new Writable[]{smallerV, vertex.getId()}));
+        PairWritable tuple = new PairWritable(vertex.getId(), smallerV);
+        sendMessage(greaterV, tuple);
+      }
+
+    // look if vertex has a triangle according to the messages
+    for(PairWritable tuple: messages) {
+      for(Edge<IntWritable, NullWritable> edge : vertex.getEdges()) {
+        if(edge.getTargetVertexId().get() == tuple.getOtherId().get())
+          saveTriangle(tuple, vertex);
+      }
+    }
 
     vertex.voteToHalt();
   }
 
-  private void saveTriangle(TupleWritable tuple, Vertex<IntWritable, Text, NullWritable> vertex) {
-    String triangle = "[" + tuple.get(0).toString() + ", " + tuple.get(1).toString() + ", " + vertex.getId().toString() + "]";
+  private void saveTriangle(PairWritable tuple, Vertex<IntWritable, Text, NullWritable> vertex) {
+    String triangle = "[" + tuple.getOtherId().toString() + ", " + tuple.getFromId().toString() + ", " + vertex.getId().toString() + "]";
     System.out.println(triangle);
     vertex.setValue(new Text(vertex.getValue().toString() + triangle));
-    LOG.info(triangle);
+//    LOG.info(triangle);
   }
 
+
+  public class PairWritable implements Writable {
+
+    private IntWritable fromId, otherId;
+
+    public PairWritable() {
+      set(new IntWritable(), new IntWritable());
+    }
+
+    public PairWritable(IntWritable fromId, IntWritable otherId) {
+      set(fromId, otherId);
+    }
+
+    public IntWritable getFromId() {
+      return fromId;
+    }
+
+    public IntWritable getOtherId() {
+      return otherId;
+    }
+
+    public void set(IntWritable fromId, IntWritable otherId) {
+      this.fromId = fromId;
+      this.otherId = otherId;
+    }
+
+    @Override
+    public void write(DataOutput dataOutput) throws IOException {
+      fromId.write(dataOutput);
+      otherId.write(dataOutput);
+    }
+
+    @Override
+    public void readFields(DataInput dataInput) throws IOException {
+      fromId.readFields(dataInput);
+      otherId.readFields(dataInput);
+    }
+  }
 }
