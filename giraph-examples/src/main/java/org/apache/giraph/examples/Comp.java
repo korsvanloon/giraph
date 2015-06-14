@@ -21,11 +21,15 @@ import java.util.List;
 
 
 // Stdout: /usr/local/hadoop/logs/userlogs/job_201506101104_0019/attempt_201506101104_0019_m_000001_0/stdout
-// (the job and attempt directories change)
+// (the job and attempt directories changes)
 
 // vertex output: $HADOOP_HOME/bin/hadoop dfs -cat /user/hduser/output/comp/p*
 
 // remove outputdir: $HADOOP_HOME/bin/hadoop dfs -rmr /user/hduser/output/comp
+
+
+// some more logging:  $HADOOP_HOME/bin/hadoop dfs -cat /user/hduser/output/comp/_logs/history/job_201506141010_0004_1434294486434_hduser_Giraph%3A+org.apache.giraph.examples.Comp
+// (the job directory changes)
 
 /**
  * Simple function to return the out degree for each vertex.
@@ -64,10 +68,14 @@ public class Comp extends BasicComputation<
       }
 
     // look if vertex has a triangle according to the messages
-    for(PairWritable tuple: messages) {
+    for(PairWritable pair: messages) {
       for(Edge<IntWritable, NullWritable> edge : vertex.getEdges()) {
-        if(edge.getTargetVertexId().get() == tuple.getOtherId().get())
-          saveTriangle(tuple, vertex);
+
+        System.out.println("edge otherId: " + edge.getTargetVertexId().get());
+        System.out.println(pair);
+        
+        if(edge.getTargetVertexId().get() == pair.getOtherId().get())
+          saveTriangle(pair, vertex);
       }
     }
 
@@ -82,7 +90,7 @@ public class Comp extends BasicComputation<
   }
 
 
-  public class PairWritable implements Writable {
+  public static class PairWritable implements Writable {
 
     private IntWritable fromId, otherId;
 
@@ -117,6 +125,11 @@ public class Comp extends BasicComputation<
     public void readFields(DataInput dataInput) throws IOException {
       fromId.readFields(dataInput);
       otherId.readFields(dataInput);
+    }
+
+    @Override
+    public String toString() {
+      return "(fromId: " + fromId.get() + ", otherId: " + otherId.get() + ")";
     }
   }
 }
