@@ -48,6 +48,22 @@ public class Comp extends BasicComputation<
           Vertex<IntWritable, Text, NullWritable> vertex,
           Iterable<PairWritable> messages) throws IOException {
 
+    boolean hasMessages = false;
+
+    // look if vertex has a triangle according to the messages
+    for(PairWritable pair: messages) {
+      hasMessages = true;
+      for(Edge<IntWritable, NullWritable> edge : vertex.getEdges()) {
+
+        System.out.println("edge otherId: " + edge.getTargetVertexId().get());
+        System.out.println(pair);
+
+        if(edge.getTargetVertexId().get() == pair.getOtherId().get()) {
+          saveTriangle(pair, vertex);
+          break;
+        }
+      }
+    }
 
     // split the neighbours into smaller and bigger vertices.
     List<IntWritable> smallerVertices = new ArrayList<>();
@@ -59,6 +75,7 @@ public class Comp extends BasicComputation<
       else
         greaterVertices.add(edge.getTargetVertexId());
 
+    if(!hasMessages)
     for(IntWritable smallerV : smallerVertices)
       for(IntWritable greaterV : greaterVertices) {
 
@@ -67,17 +84,6 @@ public class Comp extends BasicComputation<
         sendMessage(greaterV, tuple);
       }
 
-    // look if vertex has a triangle according to the messages
-    for(PairWritable pair: messages) {
-      for(Edge<IntWritable, NullWritable> edge : vertex.getEdges()) {
-
-        System.out.println("edge otherId: " + edge.getTargetVertexId().get());
-        System.out.println(pair);
-        
-        if(edge.getTargetVertexId().get() == pair.getOtherId().get())
-          saveTriangle(pair, vertex);
-      }
-    }
 
     vertex.voteToHalt();
   }
