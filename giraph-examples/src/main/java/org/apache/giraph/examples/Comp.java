@@ -66,23 +66,23 @@ public class Comp extends BasicComputation<
     }
 
     // split the neighbours into smaller and bigger vertices.
-    List<IntWritable> smallerVertices = new ArrayList<>();
-    List<IntWritable> greaterVertices = new ArrayList<>();
+    List<Integer> smallerVertices = new ArrayList<>();
+    List<Integer> greaterVertices = new ArrayList<>();
 
     for(Edge<IntWritable, NullWritable> edge : vertex.getEdges())
       if(edge.getTargetVertexId().get() < vertex.getId().get())
-        smallerVertices.add(edge.getTargetVertexId());
+        smallerVertices.add(edge.getTargetVertexId().get());
       else
-        greaterVertices.add(edge.getTargetVertexId());
+        greaterVertices.add(edge.getTargetVertexId().get());
 
     if(!hasMessages) {
 
-      for (IntWritable smallerV : smallerVertices)
-        for (IntWritable greaterV : greaterVertices) {
-
+      for (Integer smallerV : smallerVertices)
+        for (Integer greaterV : greaterVertices) {
+          System.out.println("Sending pair: " + smallerV + " " + vertex.getId().get() + " to " + greaterV );
           // hey greaterV, do you have a connection to smallerV? kind regards V
-          PairWritable tuple = new PairWritable(vertex.getId().get(), smallerV.get());
-          sendMessage(greaterV, tuple);
+          PairWritable tuple = new PairWritable(vertex.getId().get(), smallerV);
+          sendMessage(new IntWritable(greaterV), tuple);
         }
     }
 
