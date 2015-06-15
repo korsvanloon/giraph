@@ -75,14 +75,16 @@ public class Comp extends BasicComputation<
       else
         greaterVertices.add(edge.getTargetVertexId());
 
-    if(!hasMessages)
-    for(IntWritable smallerV : smallerVertices)
-      for(IntWritable greaterV : greaterVertices) {
+    if(!hasMessages) {
 
-        // hey greaterV, do you have a connection to smallerV? kind regards V
-        PairWritable tuple = new PairWritable(vertex.getId(), smallerV);
-        sendMessage(greaterV, tuple);
-      }
+      for (IntWritable smallerV : smallerVertices)
+        for (IntWritable greaterV : greaterVertices) {
+
+          // hey greaterV, do you have a connection to smallerV? kind regards V
+          PairWritable tuple = new PairWritable(vertex.getId().get(), smallerV.get());
+          sendMessage(greaterV, tuple);
+        }
+    }
 
 
     vertex.voteToHalt();
@@ -102,6 +104,10 @@ public class Comp extends BasicComputation<
 
     public PairWritable() {
       set(new IntWritable(), new IntWritable());
+    }
+
+    public PairWritable(int a, int b) {
+      set(new IntWritable(a), new IntWritable(b));
     }
 
     public PairWritable(IntWritable fromId, IntWritable otherId) {
