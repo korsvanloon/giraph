@@ -40,9 +40,6 @@ import java.util.List;
 public class Comp extends BasicComputation<
         IntWritable, Text, NullWritable, Comp.PairWritable> {
 
-//  private static final Logger LOG =
-//          Logger.getLogger(Comp.class);
-
   @Override
   public void compute(
           Vertex<IntWritable, Text, NullWritable> vertex,
@@ -53,10 +50,11 @@ public class Comp extends BasicComputation<
     // look if vertex has a triangle according to the messages
     for(PairWritable pair: messages) {
       hasMessages = true;
+
       for(Edge<IntWritable, NullWritable> edge : vertex.getEdges()) {
 
-        System.out.println("edge otherId: " + edge.getTargetVertexId().get());
-        System.out.println(pair);
+//        System.out.println("edge otherId: " + edge.getTargetVertexId().get());
+//        System.out.println(pair);
 
         if(edge.getTargetVertexId().get() == pair.getOtherId().get()) {
           saveTriangle(pair, vertex);
@@ -65,36 +63,36 @@ public class Comp extends BasicComputation<
       }
     }
 
-    // split the neighbours into smaller and bigger vertices.
-    List<Integer> smallerVertices = new ArrayList<>();
-    List<Integer> greaterVertices = new ArrayList<>();
-
-    for(Edge<IntWritable, NullWritable> edge : vertex.getEdges())
-      if(edge.getTargetVertexId().get() < vertex.getId().get())
-        smallerVertices.add(edge.getTargetVertexId().get());
-      else
-        greaterVertices.add(edge.getTargetVertexId().get());
-
     if(!hasMessages) {
 
-      for (Integer smallerV : smallerVertices)
+      // split the neighbours into smaller and bigger vertices.
+      List<Integer> smallerVertices = new ArrayList<>();
+      List<Integer> greaterVertices = new ArrayList<>();
+
+      for(Edge<IntWritable, NullWritable> edge : vertex.getEdges())
+        if(edge.getTargetVertexId().get() < vertex.getId().get())
+          smallerVertices.add(edge.getTargetVertexId().get());
+        else
+          greaterVertices.add(edge.getTargetVertexId().get());
+      
+      for (Integer smallerV : smallerVertices) {
+        PairWritable tuple = new PairWritable(vertex.getId().get(), smallerV);
         for (Integer greaterV : greaterVertices) {
-          System.out.println("Sending pair: " + smallerV + " " + vertex.getId().get() + " to " + greaterV );
+//          System.out.println("Sending pair: " + smallerV + " " + vertex.getId().get() + " to " + greaterV );
           // hey greaterV, do you have a connection to smallerV? kind regards V
-          PairWritable tuple = new PairWritable(vertex.getId().get(), smallerV);
           sendMessage(new IntWritable(greaterV), tuple);
         }
+      }
     }
-
 
     vertex.voteToHalt();
   }
 
   private void saveTriangle(PairWritable tuple, Vertex<IntWritable, Text, NullWritable> vertex) {
-    String triangle = "[" + tuple.getOtherId().toString() + ", " + tuple.getFromId().toString() + ", " + vertex.getId().toString() + "]";
+    String triangle = "[" + tuple.getOtherId().toString() + ", "
+            + tuple.getFromId().toString() + ", " + vertex.getId().toString() + "]";
     System.out.println(triangle);
     vertex.setValue(new Text(vertex.getValue().toString() + triangle));
-//    LOG.info(triangle);
   }
 
 
